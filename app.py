@@ -527,7 +527,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
             
             with tab1:
                 # Container untuk judul dan tombol download - kolom lebih proporsional
-                col_title, col_download = st.columns([7, 1])
+                col_title, col_download = st.columns([10, 1])
                 
                 with col_title:
                     st.subheader("Overtime Data With RKP PIC")
