@@ -24,9 +24,8 @@ st.set_page_config(
 st.title("⏰ Overtime Management System")
 st.markdown("---")
 
-# Toggle untuk menyembunyikan/menampilkan area proses
-with st.sidebar:
-    show_process_area = st.toggle("🔻 Show Processing Steps", value=True)
+# Toggle di bawah judul untuk menyembunyikan/menampilkan area proses
+show_process_area = st.toggle("🔻 Show Processing Steps", value=True)
 
 # Container untuk area proses (akan dihide jika toggle off)
 if show_process_area:
@@ -654,6 +653,13 @@ else:
 # Footer
 st.markdown("---")
 st.markdown(
-    "<div style='text-align: center; color: gray;'>Overtime Management System © 2025 - Kim Jong Un-</div>",
+    """
+    <div style='text-align: center; color: gray;'>
+        Overtime Management System © 2025
+    </div>
+    <div style='text-align: center; color: red;'>
+        Kim Jong Un
+    </div>
+    """,
     unsafe_allow_html=True
 )
