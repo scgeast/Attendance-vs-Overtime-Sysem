@@ -53,6 +53,23 @@ st.markdown(
     .stMetric {
         margin: 0.5rem 0 !important;
     }
+    .download-excel-btn {
+        background-color: #10793F;
+        color: white;
+        border: none;
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.3rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 1.5rem;
+    }
+    .download-excel-btn:hover {
+        background-color: #0d6633;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -514,7 +531,27 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
             ])
             
             with tab1:
-                st.subheader("Overtime Data With RKP PIC")
+                # Container untuk judul dan tombol download
+                col_title, col_download = st.columns([3, 1])
+                
+                with col_title:
+                    st.subheader("Overtime Data With RKP PIC")
+                
+                with col_download:
+                    # Siapkan file untuk download
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl' if OPENPYXL_AVAILABLE else 'xlrd') as writer:
+                        overtime_merged.to_excel(writer, sheet_name='Overtime_Merged', index=False)
+                    output.seek(0)
+                    
+                    # Tombol download dengan ikon Excel
+                    st.download_button(
+                        label="📊 Excel",
+                        data=output,
+                        file_name="overtime_merged_data.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True
+                    )
                 
                 # Tampilkan statistik
                 st.markdown(
@@ -597,16 +634,6 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                         use_container_width=True,
                         height=800  # 🚀 Diperbesar agar lebih luas
                     )
-                
-                # --- TOMBOL DOWNLOAD DI BAWAH TABEL SUDAH DIHAPUS ---
-                # Kode berikut ini TIDAK ADA LAGI di dalam blok with tab1:
-                # output = io.BytesIO()
-                # with pd.ExcelWriter(output, engine='openpyxl' if OPENPYXL_AVAILABLE else 'xlrd') as writer:
-                #     display_df.to_excel(writer, sheet_name='Overtime_Merged', index=False)
-                # output.seek(0)
-                # st.download_button(...)
-                
-                # Sekarang hanya tombol bawaan Streamlit (CSV) yang muncul di pojok kanan atas tabel.
             
             with tab2:
                 st.subheader("Data Overtime Original")
