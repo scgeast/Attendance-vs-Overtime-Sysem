@@ -156,8 +156,28 @@ def process_overtime_data(overtime_file, rekap_file):
         st.error(f"Error membaca file: {e}")
         return None, None, None
     
+    # Toggle master untuk semua expander menggunakan session state
+    if 'show_all_details' not in st.session_state:
+        st.session_state.show_all_details = False
+    
+    # Toggle button untuk show/hide semua details
+    col1, col2, col3 = st.columns([1, 2, 3])
+    with col1:
+        if st.button("📋 Tampilkan Detail Proses" if not st.session_state.show_all_details else "❌ Sembunyikan Detail Proses",
+                    type="primary" if not st.session_state.show_all_details else "secondary"):
+            st.session_state.show_all_details = not st.session_state.show_all_details
+            st.rerun()
+    
+    # Tampilkan status toggle
+    with col2:
+        if st.session_state.show_all_details:
+            st.success("🔓 Semua detail proses ditampilkan")
+        else:
+            st.info("🔒 Detail proses disembunyikan")
+    
     # Tampilkan informasi kolom dalam expander
-    with st.expander("🔍 Informasi Kolom yang Terdeteksi", expanded=False):
+    with st.expander("🔍 Informasi Kolom yang Terdeteksi", expanded=st.session_state.show_all_details):
+        st.info("Menampilkan semua kolom yang terdeteksi dalam file:")
         col1, col2 = st.columns(2)
         with col1:
             st.write("**File Overtime:**")
@@ -203,7 +223,8 @@ def process_overtime_data(overtime_file, rekap_file):
     # Tampilkan mapping kolom yang berhasil dalam expander
     st.success("✅ Semua kolom berhasil terdeteksi!")
     
-    with st.expander("📋 Mapping Kolom yang Ditemukan", expanded=False):
+    with st.expander("📋 Mapping Kolom yang Ditemukan", expanded=st.session_state.show_all_details):
+        st.info("Mapping kolom yang berhasil diidentifikasi:")
         col1, col2 = st.columns(2)
         with col1:
             st.write("**File Overtime:**")
@@ -216,8 +237,8 @@ def process_overtime_data(overtime_file, rekap_file):
             st.write(f"- Duration: `{duration_col}`")
     
     # Konversi kolom Date ke format datetime dengan format DD/MM/YYYY
-    with st.expander("🔄 Proses Konversi Format Tanggal", expanded=False):
-        st.info("Mengkonversi format tanggal...")
+    with st.expander("🔄 Proses Konversi Format Tanggal", expanded=st.session_state.show_all_details):
+        st.info("Mengkonversi format tanggal dari berbagai format ke format standar...")
         
         # Untuk file overtime
         overtime_df[date_col_overtime] = overtime_df[date_col_overtime].apply(parse_dd_mm_yyyy)
@@ -226,6 +247,7 @@ def process_overtime_data(overtime_file, rekap_file):
         rekap_df[date_col_rekap] = rekap_df[date_col_rekap].apply(parse_dd_mm_yyyy)
         
         # Tampilkan sample tanggal setelah konversi
+        st.write("**Sample tanggal setelah konversi:**")
         col1, col2 = st.columns(2)
         with col1:
             st.write("**Overtime Dates (5 sample):**")
@@ -234,27 +256,6 @@ def process_overtime_data(overtime_file, rekap_file):
             st.write("**Rekap Dates (5 sample):**")
             st.write(rekap_df[date_col_rekap].head())
     
-    # Normalisasi nama karyawan dan tanggal untuk matching
-    with st.expander("🔄 Normalisasi Data untuk Matching", expanded=False):
-        st.info("Normalisasi nama karyawan dan tanggal...")
-        
-        # Normalisasi nama karyawan ke lowercase dan strip spasi
-        overtime_df[emp_col_overtime] = overtime_df[emp_col_overtime].astype(str).str.strip().str.lower()
-        rekap_df[emp_col_rekap] = rekap_df[emp_col_rekap].astype(str).str.strip().str.lower()
-        
-        # Normalisasi tanggal ke format string YYYY-MM-DD untuk matching
-        overtime_df[date_col_overtime] = pd.to_datetime(overtime_df[date_col_overtime]).dt.strftime('%Y-%m-%d')
-        rekap_df[date_col_rekap] = pd.to_datetime(rekap_df[date_col_rekap]).dt.strftime('%Y-%m-%d')
-        
-        st.write("Contoh data setelah normalisasi:")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("**Overtime (Normalized):**")
-            st.write(overtime_df[[emp_col_overtime, date_col_overtime]].head())
-        with col2:
-            st.write("**Rekap (Normalized):**")
-            st.write(rekap_df[[emp_col_rekap, date_col_rekap]].head())
-
     # Konversi kolom Duration ke format jam (float) dan format HH:MM
     rekap_df['duration_hours'] = rekap_df[duration_col].apply(convert_to_hours)
     rekap_df['duration_hhmm'] = rekap_df['duration_hours'].apply(hours_to_hhmm)
@@ -300,7 +301,7 @@ def process_overtime_data(overtime_file, rekap_file):
     overtime_merged['RKP_PIC'] = overtime_merged.apply(get_rkp_pic, axis=1)
     
     # Juga simpan dalam format hours untuk perhitungan (jika diperlukan)
-    overtime_merged['RKP_PIC_HOURS'] = overtime_merged.apply(get_rkp_pic_hours, axis=1)
+    overtime_merged['rkppic_hours'] = overtime_merged.apply(get_rkp_pic_hours, axis=1)
     
     # Hitung statistik matching - gunakan format HH:MM untuk pengecekan
     matched_count = (overtime_merged['RKP_PIC'] != "00:00").sum()
@@ -309,7 +310,9 @@ def process_overtime_data(overtime_file, rekap_file):
     st.info(f"📊 Data berhasil diproses: {matched_count}/{total_count} record matching ({matched_count/total_count*100:.1f}%)")
     
     # Tampilkan data matching untuk verifikasi dalam expander
-    with st.expander("🔍 Verifikasi Data Matching", expanded=False):
+    with st.expander("🔍 Verifikasi Data Matching", expanded=st.session_state.show_all_details):
+        st.info("Verifikasi data yang berhasil dan tidak berhasil match:")
+        
         st.write("**Contoh data yang berhasil match:**")
         matched_data = overtime_merged[overtime_merged['RKP_PIC'] != "00:00"].head()
         if not matched_data.empty:
@@ -318,7 +321,7 @@ def process_overtime_data(overtime_file, rekap_file):
             available_cols = [col for col in display_cols if col in matched_data.columns]
             st.write(matched_data[available_cols])
         else:
-            st.write("Tidak ada data yang match")
+            st.warning("Tidak ada data yang match")
             
         st.write("---")
         st.write("**Contoh data yang TIDAK match:**")
@@ -328,7 +331,7 @@ def process_overtime_data(overtime_file, rekap_file):
             available_cols = [col for col in display_cols if col in not_matched_data.columns]
             st.write(not_matched_data[available_cols])
         else:
-            st.write("Semua data match!")
+            st.success("🎉 Semua data berhasil match!")
             
         st.write("---")
         st.write("**Statistik Matching:**")
@@ -399,7 +402,7 @@ def create_summary_table(overtime_merged):
                 job_position = job_positions.iloc[0]
         
         summary_data.append({
-            'Employee Name': employee.title(),  # Kembalikan ke format kapital
+            'Employee Name': employee,
             'Job Position': job_position,
             'D/Work': work_days,
             'WT/Normal': hours_to_hhmm(wt_normal_hours),
@@ -474,7 +477,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     st.metric("Total Overtime (Jam)", round(total_overtime_hours, 2))
                 
                 # Tampilkan kolom yang relevan saja
-                display_columns = [col for col in overtime_merged.columns if col not in ['RKP_PIC_HOURS']]
+                display_columns = [col for col in overtime_merged.columns if col not in ['rkppic_hours']]
                 display_df = overtime_merged[display_columns].copy()
                 
                 # Pastikan kolom RKP_PIC ada di posisi yang mudah dilihat
