@@ -511,7 +511,13 @@ else:
 # Footer
 st.markdown("---")
 st.markdown(
-    "<div style='text-align: center; color: gray;'>Overtime Management System © 2025</div>",
-    "<div style='text-align: center; color: blue;'>Kim Jong Un</div>",
+    """
+    <div style='text-align: center; color: gray;'>
+        Overtime Management System © 2025
+    </div>
+    <div style='text-align: center; color: blue;'>
+        Kim Jong Un
+    </div>
+    """,
     unsafe_allow_html=True
 )
