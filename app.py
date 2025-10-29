@@ -588,27 +588,60 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     st.dataframe(
                         styled_df,
                         use_container_width=True,
-                        height=800  # 🚀 Diperbesar agar lebih luas
+                        height=800
                     )
                 except:
                     # Fallback jika styling error
                     st.dataframe(
                         display_df,
                         use_container_width=True,
-                        height=800  # 🚀 Diperbesar agar lebih luas
+                        height=800
                     )
                 
-                # Download button untuk data merged
+                # --- DOWNLOAD BUTTON DI POJOK KANAN ATAS TABEL ---
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl' if OPENPYXL_AVAILABLE else 'xlrd') as writer:
                     display_df.to_excel(writer, sheet_name='Overtime_Merged', index=False)
                 output.seek(0)
-                
-                st.download_button(
-                    label="📥 Download Merged Data",
-                    data=output,
-                    file_name="overtime_merged_data.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+                # CSS untuk tombol download
+                st.markdown(
+                    """
+                    <style>
+                    .download-button {
+                        position: absolute;
+                        top: 10px;
+                        right: 10px;
+                        z-index: 100;
+                        background-color: #fff;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        padding: 6px 12px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        color: #333;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        transition: all 0.2s ease;
+                    }
+                    .download-button:hover {
+                        background-color: #f5f5f5;
+                        border-color: #ccc;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                # Tampilkan tombol download sebagai ikon saja
+                st.markdown(
+                    f"""
+                    <a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{output.getvalue().decode('latin-1')}" 
+                       download="overtime_merged_data.xlsx" 
+                       class="download-button">
+                        📥
+                    </a>
+                    """,
+                    unsafe_allow_html=True
                 )
             
             with tab2:
