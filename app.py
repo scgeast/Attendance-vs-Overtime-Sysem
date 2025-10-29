@@ -53,6 +53,13 @@ st.markdown(
     .stMetric {
         margin: 0.5rem 0 !important;
     }
+    /* Gaya untuk tombol download Excel di pojok kanan atas */
+    .stDownloadButton > button {
+        position: absolute;
+        top: 1.5rem;
+        right: 1rem;
+        z-index: 100;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -588,61 +595,31 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     st.dataframe(
                         styled_df,
                         use_container_width=True,
-                        height=800
+                        height=800  # 🚀 Diperbesar agar lebih luas
                     )
                 except:
                     # Fallback jika styling error
                     st.dataframe(
                         display_df,
                         use_container_width=True,
-                        height=800
+                        height=800  # 🚀 Diperbesar agar lebih luas
                     )
                 
-                # --- DOWNLOAD BUTTON DI POJOK KANAN ATAS TABEL ---
+                # Tombol download Excel di pojok kanan atas
                 output = io.BytesIO()
-                with pd.ExcelWriter(output, engine='openpyxl' if OPENPYXL_AVAILABLE else 'xlrd') as writer:
-                    display_df.to_excel(writer, sheet_name='Overtime_Merged', index=False)
+                with pd.ExcelWriter(output, engine='openpyxl' if OPENPYXL_AVAILABLE else 'openpyxl') as writer:
+                    overtime_merged.to_excel(writer, sheet_name='Overtime_Merged', index=False)
                 output.seek(0)
-
-                # CSS untuk tombol download
-                st.markdown(
-                    """
-                    <style>
-                    .download-button {
-                        position: absolute;
-                        top: 10px;
-                        right: 10px;
-                        z-index: 100;
-                        background-color: #fff;
-                        border: 1px solid #ddd;
-                        border-radius: 4px;
-                        padding: 6px 12px;
-                        cursor: pointer;
-                        font-size: 1rem;
-                        color: #333;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        transition: all 0.2s ease;
-                    }
-                    .download-button:hover {
-                        background-color: #f5f5f5;
-                        border-color: #ccc;
-                    }
-                    </style>
-                    """,
-                    unsafe_allow_html=True
+                
+                st.download_button(
+                    label="📥 Download Data (Excel)",
+                    data=output,
+                    file_name="overtime_merged_data.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key='download-excel'
                 )
-
-                # Tampilkan tombol download sebagai ikon saja
-                st.markdown(
-                    f"""
-                    <a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{output.getvalue().decode('latin-1')}" 
-                       download="overtime_merged_data.xlsx" 
-                       class="download-button">
-                        📥
-                    </a>
-                    """,
-                    unsafe_allow_html=True
-                )
+                
+                # Tombol download dihilangkan (tidak ditampilkan)
             
             with tab2:
                 st.subheader("Data Overtime Original")
@@ -688,7 +665,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     
                     # Download button untuk summary
                     output_summary = io.BytesIO()
-                    with pd.ExcelWriter(output_summary, engine='openpyxl' if OPENPYXL_AVAILABLE else 'xlrd') as writer:
+                    with pd.ExcelWriter(output_summary, engine='openpyxl' if OPENPYXL_AVAILABLE else 'openpyxl') as writer:
                         summary_df.to_excel(writer, sheet_name='Summary', index=False)
                     output_summary.seek(0)
                     
@@ -735,7 +712,7 @@ else:
         **Format yang diharapkan:**
         - ✅ **Employee Name**: `Employee Name`, `EmployeeName`, `Employee`, `Nama Karyawan`, `Nama`
         - ✅ **Date**: `Date`, `Tanggal`, `Tgl` (format DD/MM/YYYY)
-        - ✅ **Duration**: `Duration`, `Durasi`, `Lama Waktu`, `Total Waktu`
+        - ✅ **Duration**: `Duration`, `Durasi`, `Lama Waktu`
         
         *Nama kolom tidak case-sensitive*
         """)
