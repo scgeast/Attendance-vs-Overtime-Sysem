@@ -20,13 +20,15 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS untuk merapikan bagian atas
+# CSS untuk merapikan bagian atas — tetap rapat tapi tidak memotong judul
 st.markdown(
     """
     <style>
     .block-container {
         padding-top: 0.5rem !important;
         padding-bottom: 0rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
     h1, h2, h3 {
         margin-top: 0.2rem !important;
@@ -39,10 +41,14 @@ st.markdown(
     .css-18e3th9 {
         padding-top: 0rem !important;
         padding-bottom: 0rem !important;
+        padding-left: 0rem !important;
+        padding-right: 0rem !important;
     }
     .css-1d391kg {
         padding-top: 0rem !important;
         padding-bottom: 0rem !important;
+        padding-left: 0rem !important;
+        padding-right: 0rem !important;
     }
     .stMetric {
         margin: 0.5rem 0 !important;
@@ -52,8 +58,16 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Judul aplikasi
-st.markdown("### ⏰ Overtime Management System")
+# Judul aplikasi — pakai markdown dengan div agar lebih fleksibel
+st.markdown(
+    """
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgc3Ryb2tlPSIjMzQzNDM0IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiPjwvY2lyY2xlPjxwYXRoIGQ9Ik0xMiAydjEwTTExIDEySDcjLTQuOSAwLTktNC4xLTktOVoiIHN0cm9rZT0iIzM0MzQzNCIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIj48L3BhdGg+PC9zdmc+" alt="Overtime" width="24" height="24">
+        <h3 style="margin: 0; font-size: 1.5rem;">Overtime Management System</h3>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Toggle di bawah judul menggunakan checkbox (tanpa ikon tambahan)
 show_process_area = st.checkbox("Show Processing Steps", value=True)
@@ -500,7 +514,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
             ])
             
             with tab1:
-                st.subheader("Overtime Data with RKP PIC")
+                st.subheader("Overtime Data dengan RKP PIC")
                 
                 # Tampilkan statistik
                 st.markdown(
