@@ -531,14 +531,14 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     st.dataframe(
                         styled_df,
                         use_container_width=True,
-                        height=400
+                        height=800  # 🚀 Diperbesar agar lebih luas
                     )
                 except:
                     # Fallback jika styling error
                     st.dataframe(
                         display_df,
                         use_container_width=True,
-                        height=400
+                        height=800  # 🚀 Diperbesar agar lebih luas
                     )
                 
                 # Download button untuk data merged
