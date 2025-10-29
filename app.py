@@ -20,12 +20,37 @@ st.set_page_config(
     layout="wide"
 )
 
+# CSS untuk merapikan bagian atas
+st.markdown(
+    """
+    <style>
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 0rem !important;
+    }
+    .css-18e3th9 {
+        padding-top: 0rem !important;
+        padding-bottom: 0rem !important;
+    }
+    .css-1d391kg {
+        padding-top: 0rem !important;
+        padding-bottom: 0rem !important;
+    }
+    .stMetric {
+        margin: 0.5rem 0 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Judul aplikasi
-st.title("⏰ Overtime Management System")
-st.markdown("---")
+st.markdown("### ⏰ Overtime Management System")
 
 # Toggle di bawah judul menggunakan checkbox (tanpa ikon tambahan)
 show_process_area = st.checkbox("Show Processing Steps", value=True)
+
+st.markdown("---")
 
 # Container untuk area proses (akan dihide jika toggle off)
 if show_process_area:
@@ -437,7 +462,7 @@ def process_overtime_data(overtime_file, rekap_file):
 st.sidebar.header("📤 Upload Files")
 
 uploaded_overtime = st.sidebar.file_uploader(
-    "Upload Attendance Data File", 
+    "Upload Overtime Data File", 
     type=['xlsx'],
     help="Upload file overtime_data.xlsx"
 )
@@ -470,6 +495,16 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                 st.subheader("Overtime Data dengan RKP PIC")
                 
                 # Tampilkan statistik
+                st.markdown(
+                    """
+                    <style>
+                    .stMetric {
+                        margin: 0.5rem 0 !important;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True
+                )
                 col1, col2, col3, col4 = st.columns(4)
                 
                 with col1:
