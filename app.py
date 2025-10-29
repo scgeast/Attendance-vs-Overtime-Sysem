@@ -54,8 +54,8 @@ st.markdown(
         margin: 0.5rem 0 !important;
     }
     .excel-icon-btn {
-        background-color: none;
-        color: none;
+        background-color: #10793F;
+        color: white;
         border: none;
         padding: 0.5rem;
         border-radius: 0.5rem;
@@ -552,7 +552,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                         data=output,
                         file_name="overtime_merged_data.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True,
+                        use_container_width=none,
                         help="Download data sebagai file Excel"
                     )
                 
