@@ -54,8 +54,8 @@ st.markdown(
         margin: 0.5rem 0 !important;
     }
     .excel-icon-btn {
-        background-color: #10793F;
-        color: white;
+        background-color: none;
+        color: none;
         border: none;
         padding: 0.5rem;
         border-radius: 0.5rem;
