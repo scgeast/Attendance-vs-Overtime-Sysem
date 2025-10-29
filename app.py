@@ -24,8 +24,8 @@ st.set_page_config(
 st.title("⏰ Overtime Management System")
 st.markdown("---")
 
-# Toggle di bawah judul untuk menyembunyikan/menampilkan area proses
-show_process_area = st.toggle("🔻 Show Processing Steps", value=True)
+# Toggle di bawah judul menggunakan checkbox (tanpa ikon tambahan)
+show_process_area = st.checkbox("Show Processing Steps", value=True)
 
 # Container untuk area proses (akan dihide jika toggle off)
 if show_process_area:
