@@ -548,7 +548,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     
                     # Tombol download hanya dengan ikon Excel
                     st.download_button(
-                        label="📗",
+                        label="📥",
                         data=output,
                         file_name="overtime_merged_data.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
