@@ -552,7 +552,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                         data=output,
                         file_name="overtime_merged_data.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=true,
+                        use_container_width=True,
                         help="Download data sebagai file Excel"
                     )
                 
