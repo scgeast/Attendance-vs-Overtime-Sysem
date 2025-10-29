@@ -634,14 +634,14 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     st.dataframe(
                         styled_df,
                         use_container_width=True,
-                        height=1200  # 🚀 Diperbesar agar lebih luas
+                        height=600  # 🚀 Diperbesar agar lebih luas
                     )
                 except:
                     # Fallback jika styling error
                     st.dataframe(
                         display_df,
                         use_container_width=True,
-                        height=1200  # 🚀 Diperbesar agar lebih luas
+                        height=600  # 🚀 Diperbesar agar lebih luas
                     )
             
             with tab2:
