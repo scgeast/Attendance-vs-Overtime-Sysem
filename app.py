@@ -53,22 +53,24 @@ st.markdown(
     .stMetric {
         margin: 0.5rem 0 !important;
     }
-    .download-excel-btn {
+    .excel-icon-btn {
         background-color: #10793F;
         color: white;
         border: none;
-        padding: 0.4rem 0.8rem;
-        border-radius: 0.3rem;
-        font-size: 0.9rem;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
         cursor: pointer;
-        text-decoration: none;
-        display: inline-flex;
+        font-size: 1.2rem;
+        width: 50px;
+        height: 50px;
+        display: flex;
         align-items: center;
-        gap: 0.3rem;
-        margin-top: 1.5rem;
+        justify-content: center;
+        margin-top: 1rem;
     }
-    .download-excel-btn:hover {
+    .excel-icon-btn:hover {
         background-color: #0d6633;
+        transform: scale(1.05);
     }
     </style>
     """,
@@ -532,7 +534,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
             
             with tab1:
                 # Container untuk judul dan tombol download
-                col_title, col_download = st.columns([3, 1])
+                col_title, col_download = st.columns([4, 1])
                 
                 with col_title:
                     st.subheader("Overtime Data With RKP PIC")
@@ -544,13 +546,14 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                         overtime_merged.to_excel(writer, sheet_name='Overtime_Merged', index=False)
                     output.seek(0)
                     
-                    # Tombol download dengan ikon Excel
+                    # Tombol download hanya dengan ikon Excel
                     st.download_button(
-                        label="📊 Excel",
+                        label="📗",
                         data=output,
                         file_name="overtime_merged_data.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True
+                        use_container_width=True,
+                        help="Download data sebagai file Excel"
                     )
                 
                 # Tampilkan statistik
