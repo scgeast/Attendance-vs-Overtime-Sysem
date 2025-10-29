@@ -121,8 +121,6 @@ def process_attendance_data(df):
     """Memproses data absensi"""
     df = clean_dataframe(df)
     
-    st.write("🔍 Kolom yang terdeteksi di file absen:", list(df.columns))
-    
     # Pastikan kolom yang diperlukan ada
     required_cols = ['employeename', 'date', 'shift']
     missing_cols = [col for col in required_cols if col not in df.columns]
@@ -139,14 +137,11 @@ def process_attendance_data(df):
         st.error(f"Error konversi tanggal: {e}")
         return None
     
-    st.success("✅ Data absen berhasil diproses")
     return df
 
 def process_overtime_data(df):
     """Memproses data overtime"""
     df = clean_dataframe(df)
-    
-    st.write("🔍 Kolom yang terdeteksi di file overtime:", list(df.columns))
     
     # Pastikan kolom dasar ada
     required_cols = ['employeename', 'date']
@@ -158,8 +153,8 @@ def process_overtime_data(df):
     
     # Deteksi kolom duration
     if 'duration' not in df.columns:
-        st.warning("⚠️ Kolom 'duration' tidak ditemukan, menggunakan nilai default 0")
-        df['duration'] = 0
+        st.error("❌ Kolom 'duration' tidak ditemukan dalam file overtime")
+        return None
     else:
         df['duration'] = pd.to_numeric(df['duration'], errors='coerce').fillna(0)
     
@@ -169,7 +164,6 @@ def process_overtime_data(df):
         wt_normal_col = detect_wt_normal_column(df, available_cols)
         
         if wt_normal_col:
-            st.info(f"🎯 Menggunakan kolom '{wt_normal_col}' sebagai WT/Normal")
             # Coba konversi ke numeric, jika tidak bisa gunakan count
             df['wtnormal'] = pd.to_numeric(df[wt_normal_col], errors='coerce')
             if df['wtnormal'].isna().all():
@@ -178,10 +172,7 @@ def process_overtime_data(df):
             else:
                 df['wtnormal'] = df['wtnormal'].fillna(0)
         else:
-            st.warning("⚠️ Kolom WT/Normal tidak ditemukan, menggunakan nilai default 1")
             df['wtnormal'] = 1
-    else:
-        df['wtnormal'] = pd.to_numeric(df['wtnormal'], errors='coerce').fillna(0)
     
     # Konversi tanggal
     try:
@@ -191,19 +182,14 @@ def process_overtime_data(df):
         st.error(f"Error konversi tanggal: {e}")
         return None
     
-    st.success("✅ Data overtime berhasil diproses")
     return df
 
-def merge_data(attendance_df, overtime_df):
-    """Menggabungkan data absen dan overtime"""
+def integrate_overtime_to_attendance(attendance_df, overtime_df):
+    """Integrasikan data overtime ke absen: Duration -> RKP PIC"""
     try:
         # Clean kedua dataframe
         attendance_df = clean_dataframe(attendance_df)
         overtime_df = clean_dataframe(overtime_df)
-        
-        st.write("🔄 Melakukan merge data...")
-        st.write("Data absen columns:", list(attendance_df.columns))
-        st.write("Data overtime columns:", list(overtime_df.columns))
         
         # Merge data berdasarkan Employee Name dan Date
         merged_df = pd.merge(
@@ -217,21 +203,17 @@ def merge_data(attendance_df, overtime_df):
         # Isi kolom RKP PIC dengan duration dari overtime
         merged_df['rkppic'] = merged_df['duration'].fillna(0)
         
-        st.success("✅ Data berhasil di-merge")
         return merged_df
     
     except Exception as e:
-        st.error(f"❌ Error merging data: {e}")
+        st.error(f"❌ Error integrating data: {e}")
         return None
 
-def calculate_summary(attendance_df, overtime_df):
-    """Menghitung summary data"""
+def calculate_summary(integrated_df):
+    """Menghitung summary data dari file absen yang sudah terintegrasi"""
     try:
         # Clean data
-        attendance_df = clean_dataframe(attendance_df)
-        overtime_df = clean_dataframe(overtime_df)
-        
-        st.write("📊 Menghitung summary...")
+        integrated_df = clean_dataframe(integrated_df)
         
         # Hitung hari kerja (D/Work) - exclude libur/off/cuti
         def count_work_days(shifts):
@@ -252,29 +234,15 @@ def calculate_summary(attendance_df, overtime_df):
                     count += 1
             return count
         
-        # Group by employee untuk data absensi
-        attendance_summary = attendance_df.groupby('employeename').agg({
+        # Group by employee untuk data yang sudah terintegrasi
+        summary_df = integrated_df.groupby('employeename').agg({
             'jobposition': 'first',
-            'shift': count_work_days
-        }).reset_index()
-        
-        attendance_summary.columns = ['employeename', 'jobposition', 'dwork']
-        
-        # Group by employee untuk data overtime
-        overtime_summary = overtime_df.groupby('employeename').agg({
+            'shift': count_work_days,
             'wtnormal': 'sum',
-            'duration': 'sum'
+            'rkppic': 'sum'
         }).reset_index()
         
-        overtime_summary.columns = ['employeename', 'wtnormal', 'rkppic']
-        
-        # Gabungkan data summary
-        summary_df = pd.merge(
-            attendance_summary,
-            overtime_summary,
-            on='employeename',
-            how='left'
-        ).fillna(0)
+        summary_df.columns = ['employeename', 'jobposition', 'dwork', 'wtnormal', 'rkppic']
         
         # Urutkan kolom sesuai permintaan
         summary_df = summary_df[['employeename', 'jobposition', 'dwork', 'wtnormal', 'rkppic']]
@@ -286,7 +254,6 @@ def calculate_summary(attendance_df, overtime_df):
         summary_df['wtnormal'] = summary_df['wtnormal'].round(2)
         summary_df['rkppic'] = summary_df['rkppic'].round(2)
         
-        st.success("✅ Summary berhasil dihitung")
         return summary_df
     
     except Exception as e:
@@ -295,7 +262,7 @@ def calculate_summary(attendance_df, overtime_df):
 
 def main():
     st.title("📊 Sistem Management Absen & Overtime")
-    st.markdown("**Normalisasi Otomatis Kolom** - Aplikasi akan mendeteksi kolom secara otomatis")
+    st.markdown("**Integrasi Otomatis: Duration (Overtime) → RKP PIC (Absen)**")
     
     # Upload files
     col1, col2 = st.columns(2)
@@ -309,7 +276,7 @@ def main():
         )
     
     with col2:
-        st.subheader("⏰ Upload File Overtime")
+        st.subheader("⏰ Upload File Rekap Overtime")
         overtime_file = st.file_uploader(
             "Upload file rekap overtime (Excel/CSV)", 
             type=['xlsx', 'xls', 'csv'],
@@ -329,57 +296,37 @@ def main():
             else:
                 overtime_df = pd.read_excel(overtime_file)
             
-            # Tampilkan preview data mentah
-            with st.expander("🔍 Preview Data Mentah"):
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.write("**Data Absen (Original):**")
-                    st.dataframe(attendance_df.head(5))
-                    st.write(f"Shape: {attendance_df.shape}")
-                with col2:
-                    st.write("**Data Overtime (Original):**")
-                    st.dataframe(overtime_df.head(5))
-                    st.write(f"Shape: {overtime_df.shape}")
-            
             # Proses data
-            with st.spinner("🔄 Memproses data..."):
+            with st.spinner("🔄 Memproses dan mengintegrasikan data..."):
                 attendance_processed = process_attendance_data(attendance_df)
                 overtime_processed = process_overtime_data(overtime_df)
                 
                 if attendance_processed is not None and overtime_processed is not None:
-                    # Gabungkan data
-                    merged_data = merge_data(attendance_processed, overtime_processed)
+                    # Integrasikan data: Duration -> RKP PIC
+                    integrated_data = integrate_overtime_to_attendance(attendance_processed, overtime_processed)
                     
-                    if merged_data is not None:
-                        # Hitung summary
-                        summary_data = calculate_summary(attendance_processed, overtime_processed)
+                    if integrated_data is not None:
+                        # Hitung summary dari data yang sudah terintegrasi
+                        summary_data = calculate_summary(integrated_data)
                         
                         # Tampilkan dalam tabs
-                        tab1, tab2, tab3 = st.tabs(["📋 Data Absen", "⏰ Data Overtime", "📊 Summary"])
+                        tab1, tab2, tab3 = st.tabs(["📋 Data Absen", "🔄 Data Terintegrasi", "📊 Summary"])
                         
                         with tab1:
-                            st.subheader("Data Absen (Processed)")
+                            st.subheader("Data Absen Original")
                             st.dataframe(attendance_processed, use_container_width=True)
-                            
-                            # Download button untuk data absen
-                            csv_attendance = attendance_processed.to_csv(index=False)
-                            st.download_button(
-                                label="📥 Download Data Absen (CSV)",
-                                data=csv_attendance,
-                                file_name="data_absen_processed.csv",
-                                mime="text/csv"
-                            )
                         
                         with tab2:
-                            st.subheader("Data Overtime (Merged)")
-                            st.dataframe(merged_data, use_container_width=True)
+                            st.subheader("Data Absen + Overtime (Terintegrasi)")
+                            st.markdown("**✅ Kolom RKP PIC sudah terisi dari Duration file overtime**")
+                            st.dataframe(integrated_data, use_container_width=True)
                             
-                            # Download button untuk data overtime merged
-                            csv_overtime = merged_data.to_csv(index=False)
+                            # Download button untuk data terintegrasi
+                            csv_integrated = integrated_data.to_csv(index=False)
                             st.download_button(
-                                label="📥 Download Data Overtime Merged (CSV)",
-                                data=csv_overtime,
-                                file_name="data_overtime_merged.csv",
+                                label="📥 Download Data Terintegrasi (CSV)",
+                                data=csv_integrated,
+                                file_name="data_absen_terintegrasi.csv",
                                 mime="text/csv"
                             )
                         
@@ -415,37 +362,28 @@ def main():
                                     file_name="summary_data.csv",
                                     mime="text/csv"
                                 )
-                            else:
-                                st.error("Gagal menghitung summary data")
                 
         except Exception as e:
             st.error(f"❌ Error processing files: {str(e)}")
-            st.info("💡 Pastikan file yang diupload formatnya benar (Excel/CSV) dan tidak corrupt")
     
     else:
         # Tampilkan panduan jika belum upload file
         st.info("""
-        ### 📋 Panduan Upload File:
+        ### 📋 Alur Integrasi Data:
         
-        **File Absen harus mengandung kolom:**
-        - Employee Name (atau: nama, employee, empname, staffname)
-        - Date (atau: tanggal, workdate)  
-        - Shift (atau: shifts, workshift)
+        1. **Upload File Absen** - berisi data kehadiran harian
+        2. **Upload File Rekap Overtime** - berisi data duration overtime  
+        3. **Sistem akan otomatis:**
+           - Mengisi kolom **RKP PIC** di file absen dengan data **Duration** dari file overtime
+           - Menghitung **Summary** dari data absen yang sudah terintegrasi
         
-        **File Overtime harus mengandung kolom:**
-        - Employee Name 
-        - Date
+        ### 🎯 Hasil Output:
+        - **Data Terintegrasi**: File absen dengan kolom RKP PIC yang sudah terisi
+        - **Summary**: Ringkasan data per karyawan (D/Work, WT/Normal, RKP PIC)
         
-        **Kolom Opsional yang akan dideteksi otomatis:**
-        - Duration (atau: durasi, hours, jam, overtimehours)
-        - WT/Normal (atau: wt, normal, workingtime, worktime)
-        
-        **Fitur Normalisasi:**
-        - ✅ Auto-detect kolom berdasarkan pattern
-        - ✅ Case-insensitive matching
-        - ✅ Flexible column naming
-        - ✅ Handle missing columns dengan nilai default
-        - ✅ Preview data untuk debugging
+        ### ✅ Kolom yang Diperlukan:
+        **File Absen:** Employee Name, Date, Shift  
+        **File Overtime:** Employee Name, Date, Duration
         """)
 
 if __name__ == "__main__":
