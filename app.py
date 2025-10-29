@@ -63,7 +63,7 @@ st.markdown(
     """
     <div style="display: flex; align-items: center; gap: 0.5rem;">
         <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgc3Ryb2tlPSIjMzQzNDM0IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiPjwvY2lyY2xlPjxwYXRoIGQ9Ik0xMiAydjEwTTExIDEySDcjLTQuOSAwLTktNC4xLTktOVoiIHN0cm9rZT0iIzM0MzQzNCIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIj48L3BhdGg+PC9zdmc+" alt="Overtime" width="24" height="24">
-        <h3 style="margin: 0; font-size: 1.5rem;">Overtime Management System</h3>
+        <h3 style="margin: 0; font-size: 2rem;">Overtime Management System</h3>
     </div>
     """,
     unsafe_allow_html=True
