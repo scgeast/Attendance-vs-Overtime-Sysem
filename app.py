@@ -484,7 +484,7 @@ def process_overtime_data(overtime_file, rekap_file):
 st.sidebar.header("📤 Upload Files")
 
 uploaded_overtime = st.sidebar.file_uploader(
-    "Upload Overtime Data File", 
+    "Upload Attendance Data File", 
     type=['xlsx'],
     help="Upload file overtime_data.xlsx"
 )
@@ -514,7 +514,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
             ])
             
             with tab1:
-                st.subheader("Overtime Data dengan RKP PIC")
+                st.subheader("Overtime Data With RKP PIC")
                 
                 # Tampilkan statistik
                 st.markdown(
@@ -684,7 +684,7 @@ else:
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("File Overtime Data")
+        st.subheader("File Attendance Data")
         st.markdown("""
         **Format yang diharapkan:**
         - ✅ **Employee Name**: `Employee Name`, `EmployeeName`, `Employee`, `Nama Karyawan`, `Nama`
