@@ -500,7 +500,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
             ])
             
             with tab1:
-                st.subheader("Overtime Data dengan RKP PIC")
+                st.subheader("Overtime Data with RKP PIC")
                 
                 # Tampilkan statistik
                 st.markdown(
