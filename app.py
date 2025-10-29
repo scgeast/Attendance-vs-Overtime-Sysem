@@ -24,6 +24,15 @@ st.set_page_config(
 st.title("⏰ Overtime Management System")
 st.markdown("---")
 
+# Toggle sidebar untuk informasi kolom
+with st.sidebar:
+    show_col_info = st.toggle("🔍 Show Column Information", value=True)
+
+if show_col_info:
+    col_info_expander = st.expander("🔍 Informasi Kolom yang Terdeteksi", expanded=True)
+else:
+    col_info_expander = None
+
 def read_excel_file(file):
     """Membaca file Excel dengan engine fallback"""
     try:
@@ -226,15 +235,16 @@ def process_overtime_data(overtime_file, rekap_file):
         st.error(f"Error membaca file: {e}")
         return None, None, None
     
-    # Tampilkan informasi kolom dalam expander
-    with st.expander("🔍 Informasi Kolom yang Terdeteksi", expanded=False):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("**File Overtime:**")
-            st.write(list(overtime_df.columns))
-        with col2:
-            st.write("**File Rekap:**")
-            st.write(list(rekap_df.columns))
+    # Tampilkan informasi kolom dalam expander jika toggle aktif
+    if col_info_expander:
+        with col_info_expander:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("**File Overtime:**")
+                st.write(list(overtime_df.columns))
+            with col2:
+                st.write("**File Rekap:**")
+                st.write(list(rekap_df.columns))
     
     # Normalisasi nama kolom
     overtime_df = normalize_column_names(overtime_df)
