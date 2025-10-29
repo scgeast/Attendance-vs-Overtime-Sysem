@@ -59,12 +59,19 @@ st.markdown(
         height: 40px !important;
         padding: 0.2rem 0.5rem !important;
     }
-    .small-excel-btn .stDownloadButton button {
-        min-height: 35px !important;
-        height: 35px !important;
-        padding: 0.2rem 0.5rem !important;
-        font-size: 1.3rem !important;
-    }
+   .small-excel-btn .stDownloadButton button {
+    min-height: 35px !important;
+    height: 35px !important;
+    padding: 0.2rem 0.5rem !important;
+    font-size: 1.3rem !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    color: #000 !important;
+}
+.small-excel-btn .stDownloadButton button:hover {
+    background-color: rgba(0,0,0,0.05) !important;  /* HOVER SANGAT RINGAN */
+}
     </style>
     """,
     unsafe_allow_html=True
