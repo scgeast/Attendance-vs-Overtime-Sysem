@@ -225,16 +225,35 @@ def process_overtime_data(overtime_file, rekap_file):
             st.write("**Rekap Dates:**")
             st.write(rekap_df[date_col_rekap].head())
     
-    # Konversi kolom Duration ke format jam (float)
+    # Konversi kolom Duration ke format jam (float) dan format HH:MM
     rekap_df['duration_hours'] = rekap_df[duration_col].apply(convert_to_hours)
+    rekap_df['duration_hhmm'] = rekap_df['duration_hours'].apply(hours_to_hhmm)
     
     # Merge data untuk mengisi RKP PIC
     overtime_merged = overtime_df.copy()
     
     # Membuat mapping berdasarkan Employee Name dan Date
-    rekap_mapping = rekap_df.set_index([emp_col_rekap, date_col_rekap])['duration_hours']
+    # Gunakan format HH:MM dari rekap data
+    rekap_mapping_hhmm = rekap_df.set_index([emp_col_rekap, date_col_rekap])['duration_hhmm']
+    rekap_mapping_hours = rekap_df.set_index([emp_col_rekap, date_col_rekap])['duration_hours']
     
-    def get_rkp_pic(row):
+    def get_rkp_pic_hhmm(row):
+        """Mendapatkan RKP PIC dalam format HH:MM"""
+        employee = row[emp_col_overtime]
+        date = row[date_col_overtime]
+        
+        if pd.isna(employee) or pd.isna(date):
+            return "00:00"
+            
+        try:
+            # Cari data yang cocok
+            match = rekap_mapping_hhmm.get((employee, date), "00:00")
+            return match
+        except:
+            return "00:00"
+    
+    def get_rkp_pic_hours(row):
+        """Mendapatkan RKP PIC dalam format hours (float) untuk perhitungan"""
         employee = row[emp_col_overtime]
         date = row[date_col_overtime]
         
@@ -243,22 +262,31 @@ def process_overtime_data(overtime_file, rekap_file):
             
         try:
             # Cari data yang cocok
-            match = rekap_mapping.get((employee, date), 0.0)
+            match = rekap_mapping_hours.get((employee, date), 0.0)
             return match
         except:
             return 0.0
     
-    # Mengisi kolom RKP PIC dalam format jam (float)
-    overtime_merged['rkppic_hours'] = overtime_merged.apply(get_rkp_pic, axis=1)
+    # Mengisi kolom RKP PIC dalam format HH:MM (langsung dari file rekap)
+    overtime_merged['RKP_PIC'] = overtime_merged.apply(get_rkp_pic_hhmm, axis=1)
     
-    # Tambahkan kolom RKP PIC dalam format HH:MM
-    overtime_merged['RKP_PIC'] = overtime_merged['rkppic_hours'].apply(hours_to_hhmm)
+    # Juga simpan dalam format hours untuk perhitungan
+    overtime_merged['rkppic_hours'] = overtime_merged.apply(get_rkp_pic_hours, axis=1)
     
     # Hitung statistik matching
     matched_count = (overtime_merged['rkppic_hours'] > 0).sum()
     total_count = len(overtime_merged)
     
     st.info(f"📊 Data berhasil diproses: {matched_count}/{total_count} record matching ({matched_count/total_count*100:.1f}%)")
+    
+    # Tampilkan data matching untuk verifikasi
+    with st.expander("🔍 Verifikasi Data Matching"):
+        st.write("**Contoh data yang berhasil match:**")
+        matched_data = overtime_merged[overtime_merged['rkppic_hours'] > 0].head()
+        if not matched_data.empty:
+            st.write(matched_data[[emp_col_overtime, date_col_overtime, 'RKP_PIC']])
+        else:
+            st.write("Tidak ada data yang match")
     
     return overtime_df, rekap_df, overtime_merged
 
@@ -304,7 +332,7 @@ def create_summary_table(overtime_merged):
                 wt_value = row[wt_normal_col]
                 wt_normal_hours += convert_to_hours(wt_value)
         
-        # Hitung RKP PIC (total overtime)
+        # Hitung RKP PIC (total overtime) - menggunakan format hours untuk perhitungan
         rkp_pic_hours = employee_data['rkppic_hours'].sum()
         
         # Ambil Job Position
@@ -394,17 +422,32 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     # Pindahkan RKP_PIC ke posisi lebih depan
                     if 'RKP_PIC' in cols:
                         cols.remove('RKP_PIC')
-                        # Cari posisi setelah kolom tanggal
+                        # Cari posisi setelah kolom tanggal atau employee
                         date_col = find_column(display_df, ['Date', 'Tanggal', 'Tgl'])
+                        emp_col = find_column(display_df, ['EmployeeName', 'Employee', 'NamaKaryawan', 'Name', 'Nama'])
+                        
                         if date_col and date_col in cols:
                             date_idx = cols.index(date_col)
                             cols.insert(date_idx + 1, 'RKP_PIC')
+                        elif emp_col and emp_col in cols:
+                            emp_idx = cols.index(emp_col)
+                            cols.insert(emp_idx + 1, 'RKP_PIC')
                         else:
                             cols.insert(1, 'RKP_PIC')
                         display_df = display_df[cols]
                 
+                # Highlight baris yang memiliki RKP PIC
+                def highlight_rkp_pic(row):
+                    if row['rkppic_hours'] > 0:
+                        return ['background-color: #e6ffe6'] * len(row)
+                    else:
+                        return [''] * len(row)
+                
+                # Apply styling hanya untuk display
+                styled_df = display_df.style.apply(highlight_rkp_pic, axis=1)
+                
                 st.dataframe(
-                    display_df,
+                    styled_df,
                     use_container_width=True,
                     height=400
                 )
@@ -515,7 +558,7 @@ st.markdown(
     <div style='text-align: center; color: gray;'>
         Overtime Management System © 2025
     </div>
-    <div style='text-align: center; color: blue;'>
+    <div style='text-align: center; color: red;'>
         Kim Jong Un
     </div>
     """,
