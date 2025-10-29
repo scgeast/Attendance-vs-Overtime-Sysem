@@ -60,18 +60,23 @@ st.markdown(
         padding: 0.2rem 0.5rem !important;
     }
    .small-excel-btn .stDownloadButton button {
-    min-height: 35px !important;
-    height: 35px !important;
-    padding: 0.2rem 0.5rem !important;
-    font-size: 1.3rem !important;
-    border: none !important;
-    box-shadow: none !important;
-    background-color: transparent !important;
-    color: #000 !important;
-}
-.small-excel-btn .stDownloadButton button:hover {
-    background-color: rgba(0,0,0,0.05) !important;  /* HOVER SANGAT RINGAN */
-}
+        min-height: 35px !important;
+        height: 35px !important;
+        padding: 0.2rem 0.5rem !important;
+        font-size: 1.3rem !important;
+        border: none !important;                    /* HILANGKAN BORDER */
+        box-shadow: none !important;                /* HILANGKAN SHADOW */
+        background-color: transparent !important;   /* BACKGROUND TRANSPARAN */
+    }
+    .small-excel-btn .stDownloadButton button:hover {
+        border: none !important;                    /* HILANGKAN BORDER SAAT HOVER */
+        box-shadow: none !important;                /* HILANGKAN SHADOW SAAT HOVER */
+        background-color: #f0f0f0 !important;       /* BACKGROUND HOVER RINGAN */
+    }
+    .small-excel-btn .stDownloadButton button:active {
+        border: none !important;                    /* HILANGKAN BORDER SAAT ACTIVE */
+        box-shadow: none !important;                /* HILANGKAN SHADOW SAAT ACTIVE */
+    }
     </style>
     """,
     unsafe_allow_html=True
