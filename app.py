@@ -53,24 +53,17 @@ st.markdown(
     .stMetric {
         margin: 0.5rem 0 !important;
     }
-    .excel-icon-btn {
-        background-color: #10793F;
-        color: white;
-        border: none;
-        padding: 0.5rem;
-        border-radius: 0.5rem;
-        cursor: pointer;
-        font-size: 1.2rem;
-        width: 50px;
-        height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-top: 1rem;
+    /* CSS untuk tombol Excel kecil */
+    .small-excel-btn {
+        min-height: 40px !important;
+        height: 40px !important;
+        padding: 0.2rem 0.5rem !important;
     }
-    .excel-icon-btn:hover {
-        background-color: #0d6633;
-        transform: scale(1.05);
+    .small-excel-btn .stDownloadButton button {
+        min-height: 35px !important;
+        height: 35px !important;
+        padding: 0.2rem 0.5rem !important;
+        font-size: 1.3rem !important;
     }
     </style>
     """,
@@ -533,8 +526,8 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
             ])
             
             with tab1:
-                # Container untuk judul dan tombol download
-                col_title, col_download = st.columns([4, 1])
+                # Container untuk judul dan tombol download - kolom lebih proporsional
+                col_title, col_download = st.columns([5, 1])
                 
                 with col_title:
                     st.subheader("Overtime Data With RKP PIC")
@@ -546,14 +539,15 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                         overtime_merged.to_excel(writer, sheet_name='Overtime_Merged', index=False)
                     output.seek(0)
                     
-                    # Tombol download hanya dengan ikon Excel
+                    # Tombol download hanya dengan ikon Excel - lebih kecil
                     st.download_button(
-                        label="📥",
+                        label="📗",
                         data=output,
                         file_name="overtime_merged_data.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         use_container_width=True,
-                        help="Download data sebagai file Excel"
+                        help="Download data sebagai file Excel",
+                        key="excel_download"
                     )
                 
                 # Tampilkan statistik
