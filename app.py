@@ -24,14 +24,15 @@ st.set_page_config(
 st.title("⏰ Overtime Management System")
 st.markdown("---")
 
-# Toggle sidebar untuk informasi kolom
+# Toggle untuk menyembunyikan/menampilkan area proses
 with st.sidebar:
-    show_col_info = st.toggle("🔍 Show Column Information", value=True)
+    show_process_area = st.toggle("🔻 Show Processing Steps", value=True)
 
-if show_col_info:
-    col_info_expander = st.expander("🔍 Informasi Kolom yang Terdeteksi", expanded=True)
+# Container untuk area proses (akan dihide jika toggle off)
+if show_process_area:
+    process_container = st.container()
 else:
-    col_info_expander = None
+    process_container = None
 
 def read_excel_file(file):
     """Membaca file Excel dengan engine fallback"""
@@ -235,16 +236,17 @@ def process_overtime_data(overtime_file, rekap_file):
         st.error(f"Error membaca file: {e}")
         return None, None, None
     
-    # Tampilkan informasi kolom dalam expander jika toggle aktif
-    if col_info_expander:
-        with col_info_expander:
-            col1, col2 = st.columns(2)
-            with col1:
-                st.write("**File Overtime:**")
-                st.write(list(overtime_df.columns))
-            with col2:
-                st.write("**File Rekap:**")
-                st.write(list(rekap_df.columns))
+    # Tampilkan informasi kolom dalam expander
+    if process_container:
+        with process_container:
+            with st.expander("🔍 Informasi Kolom yang Terdeteksi", expanded=False):
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("**File Overtime:**")
+                    st.write(list(overtime_df.columns))
+                with col2:
+                    st.write("**File Rekap:**")
+                    st.write(list(rekap_df.columns))
     
     # Normalisasi nama kolom
     overtime_df = normalize_column_names(overtime_df)
@@ -281,68 +283,74 @@ def process_overtime_data(overtime_file, rekap_file):
         return None, None, None
     
     # Tampilkan mapping kolom yang berhasil dalam expander
-    st.success("✅ Semua kolom berhasil terdeteksi!")
-    
-    with st.expander("📋 Mapping Kolom yang Ditemukan", expanded=False):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("**File Overtime:**")
-            st.write(f"- Employee: `{emp_col_overtime}`")
-            st.write(f"- Date: `{date_col_overtime}`")
-        with col2:
-            st.write("**File Rekap:**")
-            st.write(f"- Employee: `{emp_col_rekap}`")
-            st.write(f"- Date: `{date_col_rekap}`")
-            st.write(f"- Duration: `{duration_col}`")
+    if process_container:
+        with process_container:
+            st.success("✅ Semua kolom berhasil terdeteksi!")
+            
+            with st.expander("📋 Mapping Kolom yang Ditemukan", expanded=False):
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("**File Overtime:**")
+                    st.write(f"- Employee: `{emp_col_overtime}`")
+                    st.write(f"- Date: `{date_col_overtime}`")
+                with col2:
+                    st.write("**File Rekap:**")
+                    st.write(f"- Employee: `{emp_col_rekap}`")
+                    st.write(f"- Date: `{date_col_rekap}`")
+                    st.write(f"- Duration: `{duration_col}`")
     
     # Konversi kolom Date ke format datetime dengan format DD/MM/YYYY
-    with st.expander("🔄 Proses Konversi Format Tanggal", expanded=False):
-        st.info("Mengkonversi format tanggal...")
-        
-        # Untuk file overtime
-        overtime_df[date_col_overtime] = overtime_df[date_col_overtime].apply(parse_dd_mm_yyyy)
-        
-        # Untuk file rekap
-        rekap_df[date_col_rekap] = rekap_df[date_col_rekap].apply(parse_dd_mm_yyyy)
-        
-        # Tampilkan sample tanggal setelah konversi
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("**Overtime Dates (5 sample):**")
-            st.write(overtime_df[date_col_overtime].head())
-        with col2:
-            st.write("**Rekap Dates (5 sample):**")
-            st.write(rekap_df[date_col_rekap].head())
+    if process_container:
+        with process_container:
+            with st.expander("🔄 Proses Konversi Format Tanggal", expanded=False):
+                st.info("Mengkonversi format tanggal...")
+                
+                # Untuk file overtime
+                overtime_df[date_col_overtime] = overtime_df[date_col_overtime].apply(parse_dd_mm_yyyy)
+                
+                # Untuk file rekap
+                rekap_df[date_col_rekap] = rekap_df[date_col_rekap].apply(parse_dd_mm_yyyy)
+                
+                # Tampilkan sample tanggal setelah konversi
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("**Overtime Dates (5 sample):**")
+                    st.write(overtime_df[date_col_overtime].head())
+                with col2:
+                    st.write("**Rekap Dates (5 sample):**")
+                    st.write(rekap_df[date_col_rekap].head())
     
     # --- NORMALISASI LEBIH KETAT UNTUK MATCHING ---
-    with st.expander("🔄 Normalisasi Data untuk Matching", expanded=False):
-        st.info("Normalisasi nama karyawan dan tanggal...")
-        
-        # Fungsi helper untuk normalisasi nama
-        def normalize_name(name):
-            if pd.isna(name):
-                return ""
-            name_str = str(name).strip().lower()
-            # Hapus karakter non-alphanumeric (opsional)
-            name_str = re.sub(r'[^a-z0-9\s]', '', name_str)
-            return name_str
+    if process_container:
+        with process_container:
+            with st.expander("🔄 Normalisasi Data untuk Matching", expanded=False):
+                st.info("Normalisasi nama karyawan dan tanggal...")
+                
+                # Fungsi helper untuk normalisasi nama
+                def normalize_name(name):
+                    if pd.isna(name):
+                        return ""
+                    name_str = str(name).strip().lower()
+                    # Hapus karakter non-alphanumeric (opsional)
+                    name_str = re.sub(r'[^a-z0-9\s]', '', name_str)
+                    return name_str
 
-        # Normalisasi nama karyawan
-        overtime_df[emp_col_overtime] = overtime_df[emp_col_overtime].apply(normalize_name)
-        rekap_df[emp_col_rekap] = rekap_df[emp_col_rekap].apply(normalize_name)
+                # Normalisasi nama karyawan
+                overtime_df[emp_col_overtime] = overtime_df[emp_col_overtime].apply(normalize_name)
+                rekap_df[emp_col_rekap] = rekap_df[emp_col_rekap].apply(normalize_name)
 
-        # Normalisasi tanggal ke format YYYY-MM-DD
-        overtime_df[date_col_overtime] = pd.to_datetime(overtime_df[date_col_overtime], errors='coerce').dt.strftime('%Y-%m-%d')
-        rekap_df[date_col_rekap] = pd.to_datetime(rekap_df[date_col_rekap], errors='coerce').dt.strftime('%Y-%m-%d')
+                # Normalisasi tanggal ke format YYYY-MM-DD
+                overtime_df[date_col_overtime] = pd.to_datetime(overtime_df[date_col_overtime], errors='coerce').dt.strftime('%Y-%m-%d')
+                rekap_df[date_col_rekap] = pd.to_datetime(rekap_df[date_col_rekap], errors='coerce').dt.strftime('%Y-%m-%d')
 
-        st.write("Contoh data setelah normalisasi:")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("**Overtime (Normalized):**")
-            st.write(overtime_df[[emp_col_overtime, date_col_overtime]].head())
-        with col2:
-            st.write("**Rekap (Normalized):**")
-            st.write(rekap_df[[emp_col_rekap, date_col_rekap]].head())
+                st.write("Contoh data setelah normalisasi:")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("**Overtime (Normalized):**")
+                    st.write(overtime_df[[emp_col_overtime, date_col_overtime]].head())
+                with col2:
+                    st.write("**Rekap (Normalized):**")
+                    st.write(rekap_df[[emp_col_rekap, date_col_rekap]].head())
 
     # Konversi kolom Duration ke format jam (float) dan format HH:MM
     rekap_df['duration_hours'] = rekap_df[duration_col].apply(convert_to_hours)
@@ -385,39 +393,43 @@ def process_overtime_data(overtime_file, rekap_file):
     matched_count = (overtime_df['RKP_PIC'] != "00:00").sum()
     total_count = len(overtime_df)
     
-    st.info(f"📊 Data berhasil diproses: {matched_count}/{total_count} record matching ({matched_count/total_count*100:.1f}%)")
+    if process_container:
+        with process_container:
+            st.info(f"📊 Data berhasil diproses: {matched_count}/{total_count} record matching ({matched_count/total_count*100:.1f}%)")
     
     # Tampilkan data matching untuk verifikasi dalam expander
-    with st.expander("🔍 Verifikasi Data Matching", expanded=False):
-        st.write("**Contoh data yang berhasil match:**")
-        matched_data = overtime_df[overtime_df['RKP_PIC'] != "00:00"].head()
-        if not matched_data.empty:
-            # Tampilkan kolom yang relevan
-            display_cols = [emp_col_overtime, date_col_overtime, 'RKP_PIC']
-            available_cols = [col for col in display_cols if col in matched_data.columns]
-            st.write(matched_data[available_cols])
-        else:
-            st.write("Tidak ada data yang match")
-            
-        st.write("---")
-        st.write("**Contoh data yang TIDAK match:**")
-        not_matched_data = overtime_df[overtime_df['RKP_PIC'] == "00:00"].head()
-        if not not_matched_data.empty:
-            display_cols = [emp_col_overtime, date_col_overtime, 'RKP_PIC']
-            available_cols = [col for col in display_cols if col in not_matched_data.columns]
-            st.write(not_matched_data[available_cols])
-        else:
-            st.write("Semua data match!")
-            
-        st.write("---")
-        st.write("**Statistik Matching:**")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total Records", total_count)
-        with col2:
-            st.metric("Data Match", matched_count)
-        with col3:
-            st.metric("Persentase Match", f"{matched_count/total_count*100:.1f}%")
+    if process_container:
+        with process_container:
+            with st.expander("🔍 Verifikasi Data Matching", expanded=False):
+                st.write("**Contoh data yang berhasil match:**")
+                matched_data = overtime_df[overtime_df['RKP_PIC'] != "00:00"].head()
+                if not matched_data.empty:
+                    # Tampilkan kolom yang relevan
+                    display_cols = [emp_col_overtime, date_col_overtime, 'RKP_PIC']
+                    available_cols = [col for col in display_cols if col in matched_data.columns]
+                    st.write(matched_data[available_cols])
+                else:
+                    st.write("Tidak ada data yang match")
+                    
+                st.write("---")
+                st.write("**Contoh data yang TIDAK match:**")
+                not_matched_data = overtime_df[overtime_df['RKP_PIC'] == "00:00"].head()
+                if not not_matched_data.empty:
+                    display_cols = [emp_col_overtime, date_col_overtime, 'RKP_PIC']
+                    available_cols = [col for col in display_cols if col in not_matched_data.columns]
+                    st.write(not_matched_data[available_cols])
+                else:
+                    st.write("Semua data match!")
+                    
+                st.write("---")
+                st.write("**Statistik Matching:**")
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Total Records", total_count)
+                with col2:
+                    st.metric("Data Match", matched_count)
+                with col3:
+                    st.metric("Persentase Match", f"{matched_count/total_count*100:.1f}%")
 
     # Kembalikan overtime_df yang sudah ditambah kolom RKP_PIC
     return overtime_df, rekap_df, overtime_df
