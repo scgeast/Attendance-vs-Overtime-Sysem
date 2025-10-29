@@ -233,12 +233,11 @@ def process_overtime_data(overtime_file, rekap_file):
     overtime_merged = overtime_df.copy()
     
     # Membuat mapping berdasarkan Employee Name dan Date
-    # Gunakan format HH:MM dari rekap data
-    rekap_mapping_hhmm = rekap_df.set_index([emp_col_rekap, date_col_rekap])['duration_hhmm']
+    rekap_mapping = rekap_df.set_index([emp_col_rekap, date_col_rekap])['duration_hhmm']
     rekap_mapping_hours = rekap_df.set_index([emp_col_rekap, date_col_rekap])['duration_hours']
     
-    def get_rkp_pic_hhmm(row):
-        """Mendapatkan RKP PIC dalam format HH:MM"""
+    def get_rkp_pic(row):
+        """Mendapatkan RKP PIC dalam format HH:MM dari file rekap"""
         employee = row[emp_col_overtime]
         date = row[date_col_overtime]
         
@@ -246,8 +245,8 @@ def process_overtime_data(overtime_file, rekap_file):
             return "00:00"
             
         try:
-            # Cari data yang cocok
-            match = rekap_mapping_hhmm.get((employee, date), "00:00")
+            # Cari data yang cocok di file rekap
+            match = rekap_mapping.get((employee, date), "00:00")
             return match
         except:
             return "00:00"
@@ -268,13 +267,13 @@ def process_overtime_data(overtime_file, rekap_file):
             return 0.0
     
     # Mengisi kolom RKP PIC dalam format HH:MM (langsung dari file rekap)
-    overtime_merged['RKP_PIC'] = overtime_merged.apply(get_rkp_pic_hhmm, axis=1)
+    overtime_merged['RKP_PIC'] = overtime_merged.apply(get_rkp_pic, axis=1)
     
-    # Juga simpan dalam format hours untuk perhitungan
+    # Juga simpan dalam format hours untuk perhitungan (jika diperlukan)
     overtime_merged['rkppic_hours'] = overtime_merged.apply(get_rkp_pic_hours, axis=1)
     
-    # Hitung statistik matching
-    matched_count = (overtime_merged['rkppic_hours'] > 0).sum()
+    # Hitung statistik matching - gunakan format HH:MM untuk pengecekan
+    matched_count = (overtime_merged['RKP_PIC'] != "00:00").sum()
     total_count = len(overtime_merged)
     
     st.info(f"📊 Data berhasil diproses: {matched_count}/{total_count} record matching ({matched_count/total_count*100:.1f}%)")
@@ -282,11 +281,21 @@ def process_overtime_data(overtime_file, rekap_file):
     # Tampilkan data matching untuk verifikasi
     with st.expander("🔍 Verifikasi Data Matching"):
         st.write("**Contoh data yang berhasil match:**")
-        matched_data = overtime_merged[overtime_merged['rkppic_hours'] > 0].head()
+        matched_data = overtime_merged[overtime_merged['RKP_PIC'] != "00:00"].head()
         if not matched_data.empty:
-            st.write(matched_data[[emp_col_overtime, date_col_overtime, 'RKP_PIC']])
+            # Tampilkan kolom yang relevan
+            display_cols = [emp_col_overtime, date_col_overtime, 'RKP_PIC']
+            st.write(matched_data[display_cols])
         else:
             st.write("Tidak ada data yang match")
+            
+        st.write("**Contoh data yang TIDAK match:**")
+        not_matched_data = overtime_merged[overtime_merged['RKP_PIC'] == "00:00"].head()
+        if not not_matched_data.empty:
+            display_cols = [emp_col_overtime, date_col_overtime, 'RKP_PIC']
+            st.write(not_matched_data[display_cols])
+        else:
+            st.write("Semua data match!")
     
     return overtime_df, rekap_df, overtime_merged
 
@@ -332,8 +341,12 @@ def create_summary_table(overtime_merged):
                 wt_value = row[wt_normal_col]
                 wt_normal_hours += convert_to_hours(wt_value)
         
-        # Hitung RKP PIC (total overtime) - menggunakan format hours untuk perhitungan
-        rkp_pic_hours = employee_data['rkppic_hours'].sum()
+        # Hitung RKP PIC (total overtime) - konversi dari format HH:MM ke hours
+        rkp_pic_total_hours = 0
+        for _, row in employee_data.iterrows():
+            rkp_value = row['RKP_PIC']
+            if rkp_value != "00:00":
+                rkp_pic_total_hours += convert_to_hours(rkp_value)
         
         # Ambil Job Position
         job_position = 'N/A'
@@ -347,7 +360,7 @@ def create_summary_table(overtime_merged):
             'Job Position': job_position,
             'D/Work': work_days,
             'WT/Normal': hours_to_hhmm(wt_normal_hours),
-            'RKP PIC': hours_to_hhmm(rkp_pic_hours)
+            'RKP PIC': hours_to_hhmm(rkp_pic_total_hours)
         })
     
     summary_df = pd.DataFrame(summary_data)
@@ -405,14 +418,19 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     st.metric("Total Records", total_records)
                 
                 with col3:
-                    filled_rkp = (overtime_merged['rkppic_hours'] > 0).sum()
+                    # Hitung yang memiliki RKP PIC (bukan "00:00")
+                    filled_rkp = (overtime_merged['RKP_PIC'] != "00:00").sum()
                     st.metric("RKP PIC Terisi", f"{filled_rkp}/{total_records}")
                 
                 with col4:
-                    total_overtime_hours = overtime_merged['rkppic_hours'].sum()
+                    # Hitung total overtime dari kolom RKP_PIC
+                    total_overtime_hours = 0
+                    for rkp_value in overtime_merged['RKP_PIC']:
+                        if rkp_value != "00:00":
+                            total_overtime_hours += convert_to_hours(rkp_value)
                     st.metric("Total Overtime (Jam)", round(total_overtime_hours, 2))
                 
-                # Tampilkan kolom yang relevan saja (sembunyikan kolom internal)
+                # Tampilkan kolom yang relevan saja
                 display_columns = [col for col in overtime_merged.columns if col not in ['rkppic_hours']]
                 display_df = overtime_merged[display_columns].copy()
                 
@@ -438,19 +456,26 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                 
                 # Highlight baris yang memiliki RKP PIC
                 def highlight_rkp_pic(row):
-                    if row['rkppic_hours'] > 0:
+                    if row['RKP_PIC'] != "00:00":
                         return ['background-color: #e6ffe6'] * len(row)
                     else:
                         return [''] * len(row)
                 
                 # Apply styling hanya untuk display
-                styled_df = display_df.style.apply(highlight_rkp_pic, axis=1)
-                
-                st.dataframe(
-                    styled_df,
-                    use_container_width=True,
-                    height=400
-                )
+                try:
+                    styled_df = display_df.style.apply(highlight_rkp_pic, axis=1)
+                    st.dataframe(
+                        styled_df,
+                        use_container_width=True,
+                        height=400
+                    )
+                except:
+                    # Fallback jika styling error
+                    st.dataframe(
+                        display_df,
+                        use_container_width=True,
+                        height=400
+                    )
                 
                 # Download button untuk data merged
                 output = io.BytesIO()
@@ -486,7 +511,7 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                         height=400
                     )
                     
-                    # Statistik summary dalam format jam
+                    # Statistik summary
                     col1, col2, col3 = st.columns(3)
                     
                     with col1:
@@ -494,12 +519,17 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                         st.metric("Total Hari Kerja", int(total_work_days))
                     
                     with col2:
-                        # Convert WT/Normal back to hours for total
-                        wt_normal_total = overtime_merged['rkppic_hours'].sum()  # Using the same calculation as before
+                        # Hitung total WT/Normal dari summary
+                        wt_normal_total = 0
+                        for wt_value in summary_df['WT/Normal']:
+                            wt_normal_total += convert_to_hours(wt_value)
                         st.metric("Total WT/Normal", hours_to_hhmm(wt_normal_total))
                     
                     with col3:
-                        rkp_pic_total = overtime_merged['rkppic_hours'].sum()
+                        # Hitung total RKP PIC dari summary
+                        rkp_pic_total = 0
+                        for rkp_value in summary_df['RKP PIC']:
+                            rkp_pic_total += convert_to_hours(rkp_value)
                         st.metric("Total RKP PIC", hours_to_hhmm(rkp_pic_total))
                     
                     # Download button untuk summary
@@ -518,8 +548,13 @@ if uploaded_overtime is not None and uploaded_rekap is not None:
                     st.warning("Tidak ada data untuk ditampilkan dalam summary.")
         
     except Exception as e:
-        st.error(f"Terjadi error dalam memproses data: {e}")
+        st.error(f"Terjadi error dalam memproses data: {str(e)}")
         st.info("Pastikan format file sesuai dengan contoh yang diberikan.")
+        # Debug info
+        with st.expander("🔧 Debug Information"):
+            st.write(f"Error type: {type(e).__name__}")
+            import traceback
+            st.code(traceback.format_exc())
 
 else:
     # Tampilan default ketika belum upload file
@@ -554,13 +589,6 @@ else:
 # Footer
 st.markdown("---")
 st.markdown(
-    """
-    <div style='text-align: center; color: gray;'>
-        Overtime Management System © 2025
-    </div>
-    <div style='text-align: center; color: red;'>
-        Kim Jong Un
-    </div>
-    """,
+    "<div style='text-align: center; color: gray;'>Overtime Management System © 2025 - Kim Jong Un-</div>",
     unsafe_allow_html=True
 )
