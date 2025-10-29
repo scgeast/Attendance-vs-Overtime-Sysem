@@ -25,8 +25,16 @@ st.markdown(
     """
     <style>
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0.5rem !important;
         padding-bottom: 0rem !important;
+    }
+    h1, h2, h3 {
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+    .stCheckbox {
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.1rem !important;
     }
     .css-18e3th9 {
         padding-top: 0rem !important;
